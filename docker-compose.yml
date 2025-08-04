@@ -1,14 +1,11 @@
-service:
+services:
 
-golang:
-  image: bljr/golang:latest
-  container_name: bljr-fiber
-  volumes:
-    - ./:app
-  working_dir: /app
-  command: go run bljr.fiber.go
-  ports:
-    - "3000:3000"
-  environment:
-
-
+  golang:
+    image: golang:alpine
+    container_name: bljr-fiber
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: go run bljr-fiber.go
+    ports:
+      - "3000:3000"
