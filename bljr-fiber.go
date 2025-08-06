@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"gofiberapp/config"
+	"gofiberapp/models"
 	"gofiberapp/routes"
 
 	"github.com/gofiber/fiber"
@@ -9,6 +11,9 @@ import (
 
 func main() {
 	app := fiber.New()
+
+	config.ConnectDB()
+	config.DB.AutoMigrate(&models.Student{})
 
 	routes.Routes(app)
 
