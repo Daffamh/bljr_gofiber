@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gofiberapp/config"
 	"gofiberapp/models"
 	"gofiberapp/routes"
@@ -13,10 +12,18 @@ func main() {
 	app := fiber.New()
 
 	config.ConnectDB()
-	config.DB.AutoMigrate(&models.Student{})
+	err := config.DB.AutoMigrate(&models.Student{}, &models.User{})
+	if err != nil {
+		println(err.Error())
+		return
+	}
 
 	routes.Routes(app)
 
-	fmt.Println("Fiber running on http://localhost:3000")
-	app.Listen(3000)
+	println("Fiber running on http://localhost:3000")
+	err = app.Listen(3000)
+	if err != nil {
+		println(err.Error())
+		return
+	}
 }

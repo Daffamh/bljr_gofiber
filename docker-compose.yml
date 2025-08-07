@@ -8,6 +8,8 @@ services:
     command: go run bljr-fiber.go
     ports:
       - "3000:3000"
+    depends_on:
+      - postgres
     networks:
       internal:
 

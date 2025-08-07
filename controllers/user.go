@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber"
+	"gofiberapp/config"
 	"gofiberapp/models"
 )
 
@@ -12,16 +13,24 @@ func GetUser(c *fiber.Ctx) {
 	if err := c.BodyParser(user); err != nil {
 		c.Status(400).Send("gagal parsing data")
 	}
-	c.Send("GET:menampilkan user dengan nama = " + user.Nama + ", alamat = " + user.Alamat + ", ID = " + id)
+	c.Send("Ganti dengan data dari DB ", id)
 }
 
 func CreateUser(c *fiber.Ctx) {
 	user := new(models.User)
 
-	if err := c.BodyParser(user); err != nil {
-		c.Status(400).Send("gagal presing data")
+	err := c.BodyParser(&user)
+	if err != nil {
+		c.Status(400).Send(err.Error())
+		return
 	}
-	c.Send("POST:menambahkan user = " + user.Nama + ", alamat = " + user.Alamat)
+
+	if err := config.DB.Create(&user).Error; err != nil {
+		c.Status(400).Send(err.Error())
+		return
+	}
+	config.DB.Create(&user)
+	c.JSON(user)
 }
 
 func UpdateUser(c *fiber.Ctx) {
@@ -32,7 +41,7 @@ func UpdateUser(c *fiber.Ctx) {
 		c.Status(400).Send("gagal parsing data")
 		return
 	}
-	c.Send("PATCH: update user ID = " + id + ", nama = " + user.Nama + ", alamat = " + user.Alamat)
+	c.Send("Ganti dengan data dari DB ", id)
 }
 
 func DeleteUser(c *fiber.Ctx) {
