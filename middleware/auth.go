@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/gofiber/fiber"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 

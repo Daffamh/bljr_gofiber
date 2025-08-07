@@ -1,12 +1,13 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber"
 	"gofiberapp/controllers"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func UserRoutes(app *fiber.App) {
-	user := app.Group("/user")
+func UserRoutes(router fiber.Router) {
+	user := router.Group("/user")
 	user.Get("/:id", controllers.GetUser)
 	user.Post("/", controllers.CreateUser)
 	user.Patch("/:id", controllers.UpdateUser)

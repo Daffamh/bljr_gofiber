@@ -1,50 +1,64 @@
 package controllers
 
 import (
-	"github.com/gofiber/fiber"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func GetUser(c *fiber.Ctx) {
+func GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	user := new(models.User)
 
 	if err := c.BodyParser(user); err != nil {
-		c.Status(400).Send("gagal parsing data")
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Invalid input",
+			"error":   err.Error(),
+		})
 	}
-	c.Send("Ganti dengan data dari DB ", id)
+	return c.JSON(fiber.Map{
+		"id": id,
+	})
 }
 
-func CreateUser(c *fiber.Ctx) {
+func CreateUser(c *fiber.Ctx) error {
 	user := new(models.User)
 
 	err := c.BodyParser(&user)
 	if err != nil {
-		c.Status(400).Send(err.Error())
-		return
+		return c.Status(400).JSON(err.Error())
+
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		c.Status(400).Send(err.Error())
-		return
+		return c.Status(400).JSON(err.Error())
+
 	}
 	config.DB.Create(&user)
-	c.JSON(user)
+	return c.JSON(user)
 }
 
-func UpdateUser(c *fiber.Ctx) {
+func UpdateUser(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 	user := new(models.User)
 	if err := c.BodyParser(user); err != nil {
-		c.Status(400).Send("gagal parsing data")
-		return
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Invalid input",
+			"error":   err.Error(),
+		})
+
 	}
-	c.Send("Ganti dengan data dari DB ", id)
+	return c.JSON(fiber.Map{
+		"id": id,
+	})
 }
 
-func DeleteUser(c *fiber.Ctx) {
+func DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
-	c.Send("DELETE: menghapus user dengan ID = " + id)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Ganti dengan deleete dari database " + id,
+	})
 }

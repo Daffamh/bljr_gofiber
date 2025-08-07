@@ -1,65 +1,80 @@
 package controllers
 
 import (
-	"github.com/gofiber/fiber"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func GetStudents(c *fiber.Ctx) {
+func GetStudents(c *fiber.Ctx) error {
 	var students []models.Student
 	config.DB.Find(&students)
-	c.JSON(students)
+	return c.JSON(students)
 }
 
-func GetStudent(c *fiber.Ctx) {
+func GetStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var student models.Student
 	if err := config.DB.First(&student, id).Error; err != nil {
-		c.Status(404).Send("student tidak ditemukan")
-		return
+		return c.Status(404).JSON(fiber.Map{
+			"message": "Student not found",
+			"error":   err.Error(),
+		})
+
 	}
-	c.JSON(student)
+	return c.JSON(student)
 }
 
-func CreateStudent(c *fiber.Ctx) {
+func CreateStudent(c *fiber.Ctx) error {
 	var student models.Student
 
 	err := c.BodyParser(&student)
 	if err != nil {
-		c.Status(400).Send(err.Error())
-		return
+		return c.Status(400).JSON(err.Error())
+
 	}
 
 	if err := config.DB.Create(&student).Error; err != nil {
-		c.Status(400).Send(err.Error())
-		return
+		return c.Status(400).JSON(err.Error())
+
 	}
 	config.DB.Create(&student)
-	c.JSON(student)
+	return c.JSON(student)
 }
 
-func UpdateStudent(c *fiber.Ctx) {
+func UpdateStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var student models.Student
 	if err := config.DB.First(&student, id).Error; err != nil {
-		c.Status(404).Send("student tidak ditemukan")
-		return
+		return c.Status(404).JSON(fiber.Map{
+			"message": "Student not found",
+			"error":   err.Error(),
+		})
+
 	}
 	if err := c.BodyParser(&student); err != nil {
-		c.Status(400).Send("data tidak valid")
-		return
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Invalid input",
+			"error":   err.Error(),
+		})
+
 	}
 	config.DB.Save(&student)
-	c.JSON(student)
+	return c.JSON(student)
 }
 
-func DeleteStudent(c *fiber.Ctx) {
+func DeleteStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var student models.Student
 	if err := config.DB.Delete(&student, id).Error; err != nil {
-		c.Status(500).Send("Gagal hapus student")
-		return
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to delete student",
+			"error":   err.Error(),
+		})
+
 	}
-	c.Send("Berhasil dihapus")
+	return c.JSON(fiber.Map{
+		"message": "Student deleted successfully",
+	})
 }

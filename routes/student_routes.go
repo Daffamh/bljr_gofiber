@@ -1,12 +1,13 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber"
 	"gofiberapp/controllers"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func StudentRoutes(app *fiber.App) {
-	student := app.Group("/student")
+func StudentRoutes(router fiber.Router) {
+	student := router.Group("/student")
 	student.Get("/", controllers.GetStudents)
 	student.Get("/:id", controllers.GetStudent)
 	student.Post("/", controllers.CreateStudent)

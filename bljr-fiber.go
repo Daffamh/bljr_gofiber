@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/gofiber/fiber/v2"
+
 	"gofiberapp/config"
 	"gofiberapp/models"
 	"gofiberapp/routes"
-
-	"github.com/gofiber/fiber"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	routes.Routes(app)
 
 	println("Fiber running on http://localhost:3000")
-	err = app.Listen(3000)
+	err = app.Listen(":3000")
 	if err != nil {
 		println(err.Error())
 		return

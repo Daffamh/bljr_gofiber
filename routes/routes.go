@@ -1,11 +1,12 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 )
 
 func Routes(app *fiber.App) {
-	UserRoutes(app)
-	StudentRoutes(app)
-	AuthRoutes(app)
+	api := app.Group("/")
+	UserRoutes(api)
+	StudentRoutes(api)
+	AuthRoutes(api)
 }
