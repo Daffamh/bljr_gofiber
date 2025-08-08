@@ -26,7 +26,7 @@ func Register(c *fiber.Ctx) error {
 
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
@@ -73,6 +73,7 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{
 			"success": false,
 			"message": "Email atau password salah",
+			"error":   err.Error(),
 		})
 
 	}
@@ -81,6 +82,7 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{
 			"success": false,
 			"message": "Email atau password salah",
+			"error":   err.Error(),
 		})
 
 	}
@@ -97,6 +99,37 @@ func Login(c *fiber.Ctx) error {
 		"data": fiber.Map{
 			"id":    user.ID,
 			"nama":  user.Name,
+			"email": user.Email,
+		},
+	})
+}
+
+func Logout(c *fiber.Ctx) error {
+
+	id := c.Locals("id")
+	config.DB.Model(&models.User{}).Where("id = ?", id).Update("token", "")
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Logout berhasil",
+	})
+}
+
+func GetProfile(c *fiber.Ctx) error {
+	userID := c.Locals("id").(uint) // Get user ID from middleware
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "User not found",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data": fiber.Map{
+			"id":    user.ID,
+			"name":  user.Name,
 			"email": user.Email,
 		},
 	})
