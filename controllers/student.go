@@ -50,7 +50,10 @@ func CreateStudent(c *fiber.Ctx) error {
 	}
 
 	var createdStudent models.Student
-	if err := config.DB.First(&createdStudent, student.Id).Error; err != nil {
+	if err := config.DB.
+		Preload("Creator").
+		Preload("Updater").
+		First(&createdStudent, student.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
 			"error":   err.Error(),
@@ -90,7 +93,10 @@ func UpdateStudent(c *fiber.Ctx) error {
 	student.UpdatedBy = userID
 	student.UpdatedBy = originalCreatedBy
 
-	config.DB.Save(&student)
+	config.DB.
+		Preload("Creator").
+		Preload("Updater").
+		Save(&student)
 	return c.JSON(student)
 }
 
@@ -107,14 +113,4 @@ func DeleteStudent(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "Student deleted successfully",
 	})
-}
-func GetUserWithStudents(c *fiber.Ctx) error {
-
-	var students []models.Student
-	config.DB.
-		Preload("Creator").
-		Preload("Updater").
-		Find(&students)
-
-	return c.JSON(students)
 }

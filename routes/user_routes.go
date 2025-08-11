@@ -12,5 +12,4 @@ func UserRoutes(router fiber.Router) {
 	user.Post("/", controllers.CreateUser)
 	user.Patch("/:id", controllers.UpdateUser)
 	user.Delete("/:id", controllers.DeleteUser)
-	user.Get("/:id/students", controllers.GetUserWithStudents)
 }
