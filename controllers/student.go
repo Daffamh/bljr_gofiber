@@ -35,12 +35,16 @@ func CreateStudent(c *fiber.Ctx) error {
 
 	}
 
+	userID := c.Locals("id").(uint)
+	student.CreatedBy = userID
+	student.UpdatedBy = userID
+
 	if err := config.DB.Create(&student).Error; err != nil {
 		return c.Status(400).JSON(err.Error())
-
 	}
+
 	config.DB.Create(&student)
-	return c.JSON(student)
+	return c.Status(201).JSON(student)
 }
 
 func UpdateStudent(c *fiber.Ctx) error {
@@ -60,6 +64,19 @@ func UpdateStudent(c *fiber.Ctx) error {
 		})
 
 	}
+
+	originalCreatedBy := student.CreatedBy
+
+	if err := c.BodyParser(&student); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Invalid input",
+			"error":   err.Error(),
+		})
+	}
+	userID := c.Locals("id").(uint)
+	student.UpdatedBy = userID
+	student.UpdatedBy = originalCreatedBy
+
 	config.DB.Save(&student)
 	return c.JSON(student)
 }

@@ -11,4 +11,8 @@ type Student struct {
 	BirthDate time.Time `json:"birth_date" gorm:"type:date"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	CreatedBy uint      `json:"created_by"`
+	UpdatedBy uint      `json:"updated_by"`
+	Creator   User      `gorm:"foreignkey:CreatedBy;references:Id"`
+	Updated   User      `gorm:"foreignkey:UpdatedBy;references:Id"`
 }
