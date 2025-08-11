@@ -13,6 +13,6 @@ type Student struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedBy uint      `json:"created_by"`
 	UpdatedBy uint      `json:"updated_by"`
-	Creator   User      `gorm:"foreignkey:CreatedBy;references:Id"`
-	Updated   User      `gorm:"foreignkey:UpdatedBy;references:Id"`
+	Creator   User      `gorm:"foreignKey:CreatedBy;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Updater   User      `gorm:"foreignKey:UpdatedBy;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
