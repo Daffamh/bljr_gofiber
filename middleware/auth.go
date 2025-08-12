@@ -3,30 +3,25 @@ package middleware
 import (
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func SimpleAuth(c *fiber.Ctx) {
-	email := c.Get("X_User_email")
-	password := c.Get("X_User_Password")
+func SimpleAuth(c *fiber.Ctx) error {
+	header := c.Get("Authorization")
 
-	if email == "" || password == "" {
-		c.Status(401).SendString("Authentical diperlukan")
-		return
-	}
+	token := strings.Split(header, "Bearer ")[1]
 
 	var user models.User
-	if err := config.DB.Where("email = ?", email).First(&user).Error; err != nil {
-		c.Status(401).SendString("User tidak ditemukan")
-		return
+	if err := config.DB.Where("token = ?", token).First(&user).Error; err != nil {
+		return c.Status(401).JSON(fiber.Map{
+			"message": "User tidak ditemukan",
+			"error":   err.Error(),
+		},
+		)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		c.Status(401).SendString("Password salah")
-		return
-	}
-	c.Locals("user", user)
-	c.Next()
+	c.Locals("id", user.ID)
+	return c.Next()
 }
