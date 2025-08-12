@@ -17,7 +17,6 @@ services:
     networks:
       internal:
 
-
   postgres:
     image: postgres:alpine
     environment:
