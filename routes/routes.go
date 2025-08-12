@@ -10,4 +10,6 @@ func Routes(app *fiber.App) {
 	StudentRoutes(api)
 	AuthRoutes(api)
 	GradeRoutes(api)
+	HomeRoomRoutes(api)
+	StatusRoutes(api)
 }
