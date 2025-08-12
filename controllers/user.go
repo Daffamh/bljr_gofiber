@@ -59,6 +59,6 @@ func DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	return c.JSON(fiber.Map{
 		"success": true,
-		"message": "Ganti dengan deleete dari database " + id,
+		"message": "Ganti dengan delete dari database " + id,
 	})
 }

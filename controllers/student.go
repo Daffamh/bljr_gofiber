@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/go-playground/validator/v10"
 	"gofiberapp/config"
 	"gofiberapp/models"
 
@@ -34,15 +35,24 @@ func GetStudent(c *fiber.Ctx) error {
 
 func CreateStudent(c *fiber.Ctx) error {
 	var student models.Student
+	validate := validator.New()
 
 	err := c.BodyParser(&student)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"message": "Invalid student",
 			"success": false,
+			"message": "Invalid student",
 			"error":   err.Error(),
 		})
+	}
 
+	err = validate.Struct(student)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid data request",
+			"error":   err.Error(),
+		})
 	}
 
 	userID := c.Locals("id").(uint)
@@ -50,7 +60,11 @@ func CreateStudent(c *fiber.Ctx) error {
 	student.UpdatedBy = userID
 
 	if err := config.DB.Create(&student).Error; err != nil {
-		return c.Status(400).JSON(err.Error())
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid data request",
+			"error":   err.Error(),
+		})
 	}
 
 	var createdStudent models.Student
