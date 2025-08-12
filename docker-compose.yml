@@ -1,0 +1,39 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: air -c .air.toml
+    environment:
+      - APP_ENV=dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      internal:
+
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: studentdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      internal:
+
+
+volumes:
+  db_data:
+
+networks:
+  internal:
+    driver: bridge
