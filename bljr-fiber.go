@@ -12,7 +12,7 @@ func main() {
 	app := fiber.New()
 
 	config.ConnectDB()
-	err := config.DB.AutoMigrate(&models.Student{}, &models.User{})
+	err := config.DB.AutoMigrate(&models.Grade{}, &models.Student{}, &models.User{})
 	if err != nil {
 		println(err.Error())
 		return
