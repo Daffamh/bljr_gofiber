@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetStudents(c *fiber.Ctx) error {
@@ -126,24 +127,22 @@ func DeleteStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("id").(uint)
 
-	var student models.Student
-	student.DeletedBy = &userID
-	if err := config.DB.Delete(&student, id).Error; err != nil {
+	if err := config.DB.Delete(&models.Student{}, id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to delete student",
 			"error":   err.Error(),
 		})
-
 	}
 
-	if err := config.DB.Save(&student).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete student",
+	if err := config.DB.Unscoped().Model(&models.Student{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to update deleted_by field",
 			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
+		"success": true,
 		"message": "Student deleted successfully",
 	})
 }
