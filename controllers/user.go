@@ -3,6 +3,7 @@ package controllers
 import (
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"gorm.io/gorm/clause"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -57,8 +58,25 @@ func UpdateUser(c *fiber.Ctx) error {
 
 func DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
+	userID := c.Locals("id").(uint)
+
+	var user models.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete user",
+			"error":   err.Error(),
+		})
+	}
+
+	user.DeletedBy = &userID
+
+	if err := config.DB.Clauses(clause.Returning{}).Save(&user).Delete(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete user",
+			"error":   err.Error(),
+		})
+	}
 	return c.JSON(fiber.Map{
-		"success": true,
-		"message": "Ganti dengan delete dari database " + id,
+		"message": "User deleted successfully",
 	})
 }

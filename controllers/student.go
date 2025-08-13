@@ -2,10 +2,9 @@ package controllers
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 func GetStudents(c *fiber.Ctx) error {
@@ -13,6 +12,7 @@ func GetStudents(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Find(&students)
 	return c.JSON(students)
 }
@@ -23,6 +23,7 @@ func GetStudent(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&student, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
@@ -71,6 +72,7 @@ func CreateStudent(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&createdStudent, student.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
@@ -114,6 +116,7 @@ func UpdateStudent(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedStudent)
 
 	return c.JSON(updatedStudent)
@@ -121,7 +124,10 @@ func UpdateStudent(c *fiber.Ctx) error {
 
 func DeleteStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
+	userID := c.Locals("id").(uint)
+
 	var student models.Student
+	student.DeletedBy = &userID
 	if err := config.DB.Delete(&student, id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to delete student",
@@ -129,6 +135,14 @@ func DeleteStudent(c *fiber.Ctx) error {
 		})
 
 	}
+
+	if err := config.DB.Save(&student).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete student",
+			"error":   err.Error(),
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"message": "Student deleted successfully",
 	})

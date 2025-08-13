@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"gorm.io/gorm/clause"
 )
 
 func GetStudentGrade(c *fiber.Ctx) error {
@@ -124,15 +125,25 @@ func UpdateStudentGrade(c *fiber.Ctx) error {
 }
 func DeleteStudentGrade(c *fiber.Ctx) error {
 	id := c.Params("id")
-	var studentgrade models.StudentGrade
-	if err := config.DB.Delete(&studentgrade, id).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "Failed to delete studentgrade",
+	userID := c.Locals("id").(uint)
+
+	var studentGrade models.StudentGrade
+	if err := config.DB.First(&studentGrade, id).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete studentGrade",
 			"error":   err.Error(),
 		})
+	}
 
+	studentGrade.DeletedBy = &userID
+
+	if err := config.DB.Clauses(clause.Returning{}).Save(&studentGrade).Delete(&studentGrade).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete studentGrade",
+			"error":   err.Error(),
+		})
 	}
 	return c.JSON(fiber.Map{
-		"message": "studentgrade deleted successfully",
+		"message": "student grade deleted successfully",
 	})
 }

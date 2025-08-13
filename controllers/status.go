@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"gorm.io/gorm/clause"
 )
 
 func GetStatus(c *fiber.Ctx) error {
@@ -119,13 +120,23 @@ func UpdateStatus(c *fiber.Ctx) error {
 }
 func DeleteStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
+	userID := c.Locals("id").(uint)
+
 	var status models.Status
-	if err := config.DB.Delete(&status, id).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{
+	if err := config.DB.First(&status, id).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete status",
 			"error":   err.Error(),
 		})
+	}
 
+	status.DeletedBy = &userID
+
+	if err := config.DB.Clauses(clause.Returning{}).Save(&status).Delete(&status).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete status",
+			"error":   err.Error(),
+		})
 	}
 	return c.JSON(fiber.Map{
 		"message": "status deleted successfully",

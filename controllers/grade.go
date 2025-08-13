@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"gorm.io/gorm/clause"
 )
 
 func GetGrade(c *fiber.Ctx) error {
@@ -12,6 +13,7 @@ func GetGrade(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Find(&grade)
 	return c.JSON(grade)
 }
@@ -22,6 +24,7 @@ func GetGrades(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&grades, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Grades not found",
@@ -70,6 +73,7 @@ func CreateGrade(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&createdGrade, grade.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
@@ -113,19 +117,30 @@ func UpdateGrade(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedGrade)
 
 	return c.JSON(updatedGrade)
 }
 func DeleteGrade(c *fiber.Ctx) error {
 	id := c.Params("id")
+	userID := c.Locals("id").(uint)
+
 	var grade models.Grade
-	if err := config.DB.Delete(&grade, id).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{
+	if err := config.DB.First(&grade, id).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete grade",
 			"error":   err.Error(),
 		})
+	}
 
+	grade.DeletedBy = &userID
+
+	if err := config.DB.Clauses(clause.Returning{}).Save(&grade).Delete(&grade).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete grade",
+			"error":   err.Error(),
+		})
 	}
 	return c.JSON(fiber.Map{
 		"message": "grade deleted successfully",

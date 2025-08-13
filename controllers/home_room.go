@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+	"gorm.io/gorm/clause"
 )
 
 func GetHomeRoom(c *fiber.Ctx) error {
@@ -12,6 +13,7 @@ func GetHomeRoom(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Find(&homeroom)
 	return c.JSON(homeroom)
 }
@@ -22,6 +24,7 @@ func GetHomeRooms(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&homeroom, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Home not found",
@@ -70,6 +73,7 @@ func CreateHomeRoom(c *fiber.Ctx) error {
 	if err := config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		First(&createdHomeRoom, homeroom.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "homeroom not found",
@@ -113,21 +117,32 @@ func UpdateHomeRoom(c *fiber.Ctx) error {
 	config.DB.
 		Preload("Creator").
 		Preload("Updater").
+		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedHomeRoom)
 
 	return c.JSON(updatedHomeRoom)
 }
 func DeleteHomeRoom(c *fiber.Ctx) error {
 	id := c.Params("id")
-	var grade models.Grade
-	if err := config.DB.Delete(&grade, id).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{
+	userID := c.Locals("id").(uint)
+
+	var homeroom models.HomeRoom
+	if err := config.DB.First(&homeroom, id).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete homeroom",
 			"error":   err.Error(),
 		})
+	}
 
+	homeroom.DeletedBy = &userID
+
+	if err := config.DB.Clauses(clause.Returning{}).Save(&homeroom).Delete(&homeroom).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete homeroom",
+			"error":   err.Error(),
+		})
 	}
 	return c.JSON(fiber.Map{
-		"message": "homeroom deleted successfully",
+		"message": "home room deleted successfully",
 	})
 }
