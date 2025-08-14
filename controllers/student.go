@@ -11,8 +11,9 @@ import (
 func GetStudents(c *fiber.Ctx) error {
 	var students []models.Student
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Find(&students)
 	return c.JSON(students)
@@ -22,9 +23,12 @@ func GetStudent(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var student models.Student
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
+		Preload("StudentGrade.HomeRoom").
+		Preload("StudentGrade.Grade").
 		First(&student, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
