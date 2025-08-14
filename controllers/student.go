@@ -58,8 +58,8 @@ func CreateStudent(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	student.CreatedBy = userID
-	student.UpdatedBy = userID
+	student.CreatedById = userID
+	student.UpdatedById = userID
 
 	if err := config.DB.Create(&student).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -109,7 +109,7 @@ func UpdateStudent(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	student.UpdatedBy = userID
+	student.UpdatedById = userID
 
 	config.DB.Save(&student)
 

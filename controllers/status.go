@@ -5,7 +5,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
-	"gorm.io/gorm/clause"
 )
 
 func GetStatus(c *fiber.Ctx) error {
@@ -56,8 +55,8 @@ func CreateStatus(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	status.CreatedBy = userID
-	status.UpdatedBy = userID
+	status.CreatedById = userID
+	status.UpdatedById = userID
 
 	if err := config.DB.Create(&status).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -106,7 +105,7 @@ func UpdateStatus(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	status.UpdatedBy = userID
+	status.UpdatedById = userID
 
 	config.DB.Save(&status)
 
@@ -122,23 +121,22 @@ func DeleteStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("id").(uint)
 
-	var status models.Status
-	if err := config.DB.First(&status, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	if err := config.DB.Delete(&models.Status{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to delete status",
 			"error":   err.Error(),
 		})
 	}
 
-	status.DeletedBy = &userID
-
-	if err := config.DB.Clauses(clause.Returning{}).Save(&status).Delete(&status).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete status",
+	if err := config.DB.Unscoped().Model(&models.Status{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to update delete_by field",
 			"error":   err.Error(),
 		})
 	}
+
 	return c.JSON(fiber.Map{
-		"message": "status deleted successfully",
+		"success": true,
+		"message": "status deletd successfully",
 	})
 }

@@ -7,12 +7,15 @@ import (
 )
 
 type Blameable struct {
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	CreatedBy uint           `json:"created_by"`
-	UpdatedBy uint           `json:"updated_by"`
-	Creator   User           `gorm:"foreignKey:CreatedBy;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Updater   User           `gorm:"foreignKey:UpdatedBy;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	DeletedBy uint           `json:"deleted_by" gorm:"column:deleted_by"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
+	CreatedById uint      `json:"created_by_id"`
+	CreatedBy   User      `json:"created_by" gorm:"foreignKey:CreatedById;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	CreatedAt   time.Time `json:"created_at"`
+
+	UpdatedById uint      `json:"updated_by_id"`
+	UpdatedBy   User      `json:"updated_by" gorm:"foreignKey:UpdatedById;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	UpdatedAt   time.Time `json:"updated_at"`
+
+	DeletedById uint           `json:"deleted_by_id" gorm:"column:deleted_by_id"`
+	DeletedBy   User           `json:"deleted_by" gorm:"foreignKey:DeletedById;"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"index;column:deleted_at"`
 }

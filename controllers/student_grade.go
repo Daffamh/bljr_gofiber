@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
-	"gorm.io/gorm/clause"
 )
 
 func GetStudentGrade(c *fiber.Ctx) error {
@@ -59,8 +58,8 @@ func CreateStudentGrade(c *fiber.Ctx) error {
 	//}
 
 	userID := c.Locals("id").(uint)
-	studentgrade.CreatedBy = userID
-	studentgrade.UpdatedBy = userID
+	studentgrade.CreatedById = userID
+	studentgrade.UpdatedById = userID
 
 	if err := config.DB.Create(&studentgrade).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -72,8 +71,8 @@ func CreateStudentGrade(c *fiber.Ctx) error {
 
 	var createdStudentGrade models.StudentGrade
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
 		Preload("Student").
 		Preload("Grade").
 		Preload("HomeRoom").
@@ -107,7 +106,7 @@ func UpdateStudentGrade(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	studentGrade.UpdatedBy = userID
+	studentGrade.UpdatedById = userID
 
 	config.DB.Save(&studentGrade)
 
@@ -123,27 +122,27 @@ func UpdateStudentGrade(c *fiber.Ctx) error {
 
 	return c.JSON(updatedStudentGrade)
 }
+
 func DeleteStudentGrade(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("id").(uint)
 
-	var studentGrade models.StudentGrade
-	if err := config.DB.First(&studentGrade, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete studentGrade",
+	if err := config.DB.Delete(&models.StudentGrade{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to delete student field",
 			"error":   err.Error(),
 		})
 	}
 
-	studentGrade.DeletedBy = &userID
-
-	if err := config.DB.Clauses(clause.Returning{}).Save(&studentGrade).Delete(&studentGrade).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete studentGrade",
+	if err := config.DB.Unscoped().Model(&models.StudentGrade{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to update delete_by student grade",
 			"error":   err.Error(),
 		})
 	}
+
 	return c.JSON(fiber.Map{
-		"message": "student grade deleted successfully",
+		"success": true,
+		"message": "student grade delete successfully",
 	})
 }

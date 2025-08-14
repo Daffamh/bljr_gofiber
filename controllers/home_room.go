@@ -5,7 +5,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
-	"gorm.io/gorm/clause"
 )
 
 func GetHomeRoom(c *fiber.Ctx) error {
@@ -58,8 +57,8 @@ func CreateHomeRoom(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	homeroom.CreatedBy = userID
-	homeroom.UpdatedBy = userID
+	homeroom.CreatedById = userID
+	homeroom.UpdatedById = userID
 
 	if err := config.DB.Create(&homeroom).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -109,7 +108,7 @@ func UpdateHomeRoom(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	homeroom.UpdatedBy = userID
+	homeroom.UpdatedById = userID
 
 	config.DB.Save(&homeroom)
 
@@ -126,23 +125,22 @@ func DeleteHomeRoom(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("id").(uint)
 
-	var homeroom models.HomeRoom
-	if err := config.DB.First(&homeroom, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete homeroom",
+	if err := config.DB.Delete(&models.HomeRoom{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to delete home room",
 			"error":   err.Error(),
 		})
 	}
 
-	homeroom.DeletedBy = &userID
-
-	if err := config.DB.Clauses(clause.Returning{}).Save(&homeroom).Delete(&homeroom).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete homeroom",
+	if err := config.DB.Unscoped().Model(&models.HomeRoom{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to update delete_by field",
 			"error":   err.Error(),
 		})
 	}
+
 	return c.JSON(fiber.Map{
-		"message": "home room deleted successfully",
+		"success": true,
+		"message": "home room deletd successfully",
 	})
 }

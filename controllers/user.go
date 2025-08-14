@@ -1,11 +1,9 @@
 package controllers
 
 import (
+	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
-	"gorm.io/gorm/clause"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 func GetUser(c *fiber.Ctx) error {
@@ -60,23 +58,22 @@ func DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("id").(uint)
 
-	var user models.User
-	if err := config.DB.First(&user, id).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	if err := config.DB.Delete(&models.User{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to delete user",
 			"error":   err.Error(),
 		})
 	}
 
-	user.DeletedBy = &userID
-
-	if err := config.DB.Clauses(clause.Returning{}).Save(&user).Delete(&user).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete user",
+	if err := config.DB.Unscoped().Model(&models.User{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to update delete_by field",
 			"error":   err.Error(),
 		})
 	}
+
 	return c.JSON(fiber.Map{
-		"message": "User deleted successfully",
+		"success": true,
+		"message": "user deletd successfully",
 	})
 }
