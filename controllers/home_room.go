@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetHomeRoom(c *fiber.Ctx) error {
@@ -57,8 +58,8 @@ func CreateHomeRoom(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	homeroom.CreatedById = userID
-	homeroom.UpdatedById = userID
+	homeroom.CreatedById = &userID
+	homeroom.UpdatedById = &userID
 
 	if err := config.DB.Create(&homeroom).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -70,8 +71,9 @@ func CreateHomeRoom(c *fiber.Ctx) error {
 
 	var createdHomeRoom models.HomeRoom
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		First(&createdHomeRoom, homeroom.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -108,7 +110,7 @@ func UpdateHomeRoom(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	homeroom.UpdatedById = userID
+	homeroom.UpdatedById = &userID
 
 	config.DB.Save(&homeroom)
 

@@ -1,17 +1,18 @@
 package controllers
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetStudentGrade(c *fiber.Ctx) error {
 	var studentgrade []models.StudentGrade
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
-		Preload("Student").
+		Preload("UpdatedBy").
+		Preload("CreatedBy").
+		Preload("DeletedBy").
 		Preload("Grade").
 		Preload("HomeRoom").
 		Preload("Status").
@@ -23,8 +24,13 @@ func GetStudentGrades(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var studentgrade models.StudentGrade
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("UpdatedBy").
+		Preload("CreatedBy").
+		Preload("DeletedBy").
+		Preload("Student").
+		Preload("Grade").
+		Preload("HomeRoom").
+		Preload("Status").
 		First(&studentgrade, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "studentgrade not found",
@@ -58,8 +64,8 @@ func CreateStudentGrade(c *fiber.Ctx) error {
 	//}
 
 	userID := c.Locals("id").(uint)
-	studentgrade.CreatedById = userID
-	studentgrade.UpdatedById = userID
+	studentgrade.CreatedById = &userID
+	studentgrade.UpdatedById = &userID
 
 	if err := config.DB.Create(&studentgrade).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -106,7 +112,7 @@ func UpdateStudentGrade(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	studentGrade.UpdatedById = userID
+	studentGrade.UpdatedById = &userID
 
 	config.DB.Save(&studentGrade)
 

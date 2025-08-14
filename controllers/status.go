@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetStatus(c *fiber.Ctx) error {
@@ -55,8 +56,8 @@ func CreateStatus(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	status.CreatedById = userID
-	status.UpdatedById = userID
+	status.CreatedById = &userID
+	status.UpdatedById = &userID
 
 	if err := config.DB.Create(&status).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -105,7 +106,7 @@ func UpdateStatus(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	status.UpdatedById = userID
+	status.UpdatedById = &userID
 
 	config.DB.Save(&status)
 

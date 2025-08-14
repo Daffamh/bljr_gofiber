@@ -1,17 +1,19 @@
 package controllers
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"gofiberapp/config"
 	"gofiberapp/models"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetGrade(c *fiber.Ctx) error {
 	var grade []models.Grade
-	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+	config.DB.Unscoped().
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Find(&grade)
 	return c.JSON(grade)
@@ -21,8 +23,9 @@ func GetGrades(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var grades models.Grade
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("UpdatedBy").
+		Preload("CreatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		First(&grades, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -57,8 +60,8 @@ func CreateGrade(c *fiber.Ctx) error {
 	}
 
 	userID := c.Locals("id").(uint)
-	grade.CreatedById = userID
-	grade.UpdatedById = userID
+	grade.CreatedById = &userID
+	grade.UpdatedById = &userID
 
 	if err := config.DB.Create(&grade).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -70,8 +73,9 @@ func CreateGrade(c *fiber.Ctx) error {
 
 	var createdGrade models.Grade
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("UpdatedBy").
+		Preload("CreatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		First(&createdGrade, grade.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -108,14 +112,15 @@ func UpdateGrade(c *fiber.Ctx) error {
 		})
 	}
 	userID := c.Locals("id").(uint)
-	grade.UpdatedById = userID
+	grade.UpdatedById = &userID
 
 	config.DB.Save(&grade)
 
 	var updatedGrade models.Grade
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("UpdatedBy").
+		Preload("CreatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedGrade)
 
@@ -133,7 +138,7 @@ func DeleteGrade(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.Grade{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.Grade{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update delete_by field",
 			"error":   err.Error(),
