@@ -10,9 +10,10 @@ import (
 
 func GetHomeRoom(c *fiber.Ctx) error {
 	var homeroom []models.HomeRoom
-	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+	config.DB.Unscoped().
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Find(&homeroom)
 	return c.JSON(homeroom)
@@ -22,8 +23,9 @@ func GetHomeRooms(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var homeroom models.HomeRoom
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		First(&homeroom, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -116,8 +118,9 @@ func UpdateHomeRoom(c *fiber.Ctx) error {
 
 	var updatedHomeRoom models.Status
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedHomeRoom)
 
@@ -134,7 +137,7 @@ func DeleteHomeRoom(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.HomeRoom{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.HomeRoom{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update delete_by field",
 			"error":   err.Error(),

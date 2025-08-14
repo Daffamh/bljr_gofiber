@@ -9,7 +9,7 @@ import (
 
 func GetStudentGrade(c *fiber.Ctx) error {
 	var studentgrade []models.StudentGrade
-	config.DB.
+	config.DB.Unscoped().
 		Preload("UpdatedBy").
 		Preload("CreatedBy").
 		Preload("DeletedBy").
@@ -118,8 +118,9 @@ func UpdateStudentGrade(c *fiber.Ctx) error {
 
 	var updatedStudentGrade models.StudentGrade
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("Student").
 		Preload("Grade").
 		Preload("HomeRoom").
@@ -140,7 +141,7 @@ func DeleteStudentGrade(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.StudentGrade{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.StudentGrade{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update delete_by student grade",
 			"error":   err.Error(),

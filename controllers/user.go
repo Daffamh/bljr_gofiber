@@ -65,7 +65,7 @@ func DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.User{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.User{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update delete_by field",
 			"error":   err.Error(),

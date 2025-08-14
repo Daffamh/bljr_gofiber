@@ -118,8 +118,8 @@ func UpdateGrade(c *fiber.Ctx) error {
 
 	var updatedGrade models.Grade
 	config.DB.
-		Preload("UpdatedBy").
 		Preload("CreatedBy").
+		Preload("UpdatedBy").
 		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedGrade)

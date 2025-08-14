@@ -10,9 +10,10 @@ import (
 
 func GetStatus(c *fiber.Ctx) error {
 	var status []models.Status
-	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+	config.DB.Unscoped().
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Find(&status)
 	return c.JSON(status)
 }
@@ -21,8 +22,9 @@ func GetStatuss(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var status models.Status
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		First(&status, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "status not found",
@@ -69,8 +71,8 @@ func CreateStatus(c *fiber.Ctx) error {
 
 	var createdStatus models.Status
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
 		First(&createdStatus, status.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "status not found",
@@ -110,13 +112,14 @@ func UpdateStatus(c *fiber.Ctx) error {
 
 	config.DB.Save(&status)
 
-	var updatedHomeRoom models.Status
+	var updatedStatus models.Status
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
-		Where("id = ?", id).First(&updatedHomeRoom)
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
+		Where("id = ?", id).First(&updatedStatus)
 
-	return c.JSON(updatedHomeRoom)
+	return c.JSON(updatedStatus)
 }
 func DeleteStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -129,7 +132,7 @@ func DeleteStatus(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.Status{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.Status{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update delete_by field",
 			"error":   err.Error(),

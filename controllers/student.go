@@ -10,7 +10,7 @@ import (
 
 func GetStudents(c *fiber.Ctx) error {
 	var students []models.Student
-	config.DB.
+	config.DB.Unscoped().
 		Preload("CreatedBy").
 		Preload("UpdatedBy").
 		Preload("DeletedBy").
@@ -27,8 +27,8 @@ func GetStudent(c *fiber.Ctx) error {
 		Preload("UpdatedBy").
 		Preload("DeletedBy").
 		Preload("StudentGrade").
-		Preload("StudentGrade.HomeRoom").
-		Preload("StudentGrade.Grade").
+		//Preload("StudentGrade.HomeRoom").
+		//Preload("StudentGrade.Grade").
 		First(&student, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "Student not found",
@@ -75,8 +75,9 @@ func CreateStudent(c *fiber.Ctx) error {
 
 	var createdStudent models.Student
 	if err := config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		First(&createdStudent, student.Id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -119,8 +120,9 @@ func UpdateStudent(c *fiber.Ctx) error {
 
 	var updatedStudent models.Student
 	config.DB.
-		Preload("Creator").
-		Preload("Updater").
+		Preload("CreatedBy").
+		Preload("UpdatedBy").
+		Preload("DeletedBy").
 		Preload("StudentGrade").
 		Where("id = ?", id).First(&updatedStudent)
 
@@ -138,7 +140,7 @@ func DeleteStudent(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := config.DB.Unscoped().Model(&models.Student{}).Where("id = ?", id).Update("deleted_by", userID).Error; err != nil {
+	if err := config.DB.Unscoped().Model(&models.Student{}).Where("id = ?", id).Update("deleted_by_id", userID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Failed to update deleted_by field",
 			"error":   err.Error(),
